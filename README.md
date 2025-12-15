@@ -83,8 +83,25 @@ copilot-proxy config show-path
 
 # Start proxy (uses saved config automatically)
 copilot-proxy serve
-```
 
+# Set context length (controls Copilot context window size)
+copilot-proxy config set-context-length 128000
+
+# View current context length (default: 64000)
+copilot-proxy config get-context-length
+
+# Set default model
+copilot-proxy config set-model GLM-4.6
+
+# View current model
+copilot-proxy config get-model
+
+# Set temperature (0.0 = deterministic, 1.0 = creative)
+copilot-proxy config set-temperature 0.1
+
+# View current temperature
+copilot-proxy config get-temperature
+```
 **Priority Order:** Config file > Environment variables > Default values
 
 ### Configure GitHub Copilot in VS Code
