@@ -91,7 +91,7 @@ copilot-proxy config set-context-length 128000
 copilot-proxy config get-context-length
 
 # Set default model
-copilot-proxy config set-model GLM-4.6
+copilot-proxy config set-model GLM-4.7
 
 # View current model
 copilot-proxy config get-model
@@ -116,11 +116,21 @@ copilot-proxy config get-temperature
 
 The proxy advertises the GLM Coding Plan lineup so Copilot (or any Ollama-compatible client) can switch between them seamlessly:
 
-| Model        | Description                               | Use Case Highlights                          |
-|--------------|--------------------------------------------|----------------------------------------------|
-| `GLM-4.6`    | Flagship coding model with top-tier reasoning | Complex refactors, multi-file tasks, tool use |
-| `GLM-4.5`    | Balanced performance for everyday coding      | General coding, debugging, architecture input |
-| `GLM-4.5-Air`| Lightweight, faster response variant          | Quick iterations, drafting, lower-latency use |
+| Model | Description | Concurrency |
+|-------|-------------|-------------|
+| `GLM-4.7` | Next-gen flagship with advanced "Vibe Coding" | 2 |
+| `GLM-4-Plus` | High-throughput flagship variant | 20 |
+| `GLM-4.6` | Flagship coding model with top-tier reasoning | 3 |
+| `GLM-4.5` | Balanced performance for everyday coding | 10 |
+| `GLM-4.5-Air` | Lightweight, faster response variant | 5 |
+| `GLM-4.5-AirX` | Accelerated variant of the Air model | 5 |
+| `GLM-4.5-Flash` | Ultra-fast, low-latency coding model | 2 |
+| `GLM-4.6V` | Multimodal (Vision) flagship model | 10 |
+| `GLM-4.6V-Flash` | Fast multimodal coding & analysis | 3 |
+| `GLM-4.6V-FlashX` | Accelerated fast multimodal model | 3 |
+| `GLM-4.5V` | Previous generation multimodal model | 10 |
+| `AutoGLM-Phone-Multilingual`| Specialized mobile/agentic model | 5 |
+| `GLM-4-32B-0414-128K` | Dense 32B parameter coding specialist | 15 |
 
 > **Tip:** These identifiers match the GLM Coding Plan catalog, so any OpenAI-compatible tool can use them by pointing to `https://api.z.ai/api/coding/paas/v4` with your Coding Plan API key.
 

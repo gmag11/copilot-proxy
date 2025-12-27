@@ -18,7 +18,7 @@ from .config import (
 )
 
 DEFAULT_BASE_URL = "https://api.z.ai/api/coding/paas/v4"
-DEFAULT_MODEL = "GLM-4.6"
+DEFAULT_MODEL = "GLM-4.7"
 API_KEY_ENV_VARS = ("ZAI_API_KEY", "ZAI_CODING_API_KEY", "GLM_API_KEY")
 BASE_URL_ENV_VAR = "ZAI_API_BASE_URL"
 CHAT_COMPLETION_PATH = "/chat/completions"
@@ -27,6 +27,34 @@ def get_model_catalog():
     """Generate the model catalog dynamically based on config."""
     context_length = get_context_length()
     return [
+        {
+            "name": "GLM-4.7",
+            "model": "GLM-4.7",
+            "modified_at": "2025-12-21T00:00:00Z",
+            "size": 0,
+            "digest": "GLM-4.7",
+            "details": {
+                "format": "glm",
+                "family": "glm",
+                "families": ["glm"],
+                "parameter_size": "cloud",
+                "quantization_level": "cloud",
+            },
+        },
+        {
+            "name": "GLM-4-Plus",
+            "model": "GLM-4-Plus",
+            "modified_at": "2024-01-01T00:00:00Z",
+            "size": 0,
+            "digest": "GLM-4-Plus",
+            "details": {
+                "format": "glm",
+                "family": "glm",
+                "families": ["glm"],
+                "parameter_size": "cloud",
+                "quantization_level": "cloud",
+            },
+        },
         {
             "name": "GLM-4.6",
             "model": "GLM-4.6",
@@ -61,6 +89,118 @@ def get_model_catalog():
             "modified_at": "2024-01-01T00:00:00Z",
             "size": 0,
             "digest": "GLM-4.5-Air",
+            "details": {
+                "format": "glm",
+                "family": "glm",
+                "families": ["glm"],
+                "parameter_size": "cloud",
+                "quantization_level": "cloud",
+            },
+        },
+        {
+            "name": "GLM-4.5-AirX",
+            "model": "GLM-4.5-AirX",
+            "modified_at": "2024-01-01T00:00:00Z",
+            "size": 0,
+            "digest": "GLM-4.5-AirX",
+            "details": {
+                "format": "glm",
+                "family": "glm",
+                "families": ["glm"],
+                "parameter_size": "cloud",
+                "quantization_level": "cloud",
+            },
+        },
+        {
+            "name": "GLM-4.5-Flash",
+            "model": "GLM-4.5-Flash",
+            "modified_at": "2024-01-01T00:00:00Z",
+            "size": 0,
+            "digest": "GLM-4.5-Flash",
+            "details": {
+                "format": "glm",
+                "family": "glm",
+                "families": ["glm"],
+                "parameter_size": "cloud",
+                "quantization_level": "cloud",
+            },
+        },
+        {
+            "name": "GLM-4.6V",
+            "model": "GLM-4.6V",
+            "modified_at": "2024-01-01T00:00:00Z",
+            "size": 0,
+            "digest": "GLM-4.6V",
+            "details": {
+                "format": "glm",
+                "family": "glm",
+                "families": ["glm"],
+                "parameter_size": "cloud",
+                "quantization_level": "cloud",
+            },
+        },
+        {
+            "name": "GLM-4.6V-Flash",
+            "model": "GLM-4.6V-Flash",
+            "modified_at": "2024-01-01T00:00:00Z",
+            "size": 0,
+            "digest": "GLM-4.6V-Flash",
+            "details": {
+                "format": "glm",
+                "family": "glm",
+                "families": ["glm"],
+                "parameter_size": "cloud",
+                "quantization_level": "cloud",
+            },
+        },
+        {
+            "name": "GLM-4.6V-FlashX",
+            "model": "GLM-4.6V-FlashX",
+            "modified_at": "2024-01-01T00:00:00Z",
+            "size": 0,
+            "digest": "GLM-4.6V-FlashX",
+            "details": {
+                "format": "glm",
+                "family": "glm",
+                "families": ["glm"],
+                "parameter_size": "cloud",
+                "quantization_level": "cloud",
+            },
+        },
+        {
+            "name": "GLM-4.5V",
+            "model": "GLM-4.5V",
+            "modified_at": "2024-01-01T00:00:00Z",
+            "size": 0,
+            "digest": "GLM-4.5V",
+            "details": {
+                "format": "glm",
+                "family": "glm",
+                "families": ["glm"],
+                "parameter_size": "cloud",
+                "quantization_level": "cloud",
+            },
+        },
+        {
+            "name": "AutoGLM-Phone-Multilingual",
+            "model": "AutoGLM-Phone-Multilingual",
+            "modified_at": "2024-01-01T00:00:00Z",
+            "size": 0,
+            "digest": "AutoGLM-Phone-Multilingual",
+            "details": {
+                "format": "glm",
+                "family": "glm",
+                "families": ["glm"],
+                "parameter_size": "cloud",
+                "quantization_level": "cloud",
+            },
+        },
+        {
+            "name": "GLM-4-32B-0414-128K",
+            "model": "GLM-4-32B-0414-128K",
+            "modified_at": "2024-01-01T00:00:00Z",
+            "size": 0,
+            "digest": "GLM-4-32B-0414-128K",
             "details": {
                 "format": "glm",
                 "family": "glm",

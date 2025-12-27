@@ -126,7 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # Set model name
     set_model_parser = config_subparsers.add_parser("set-model", help="Set default model name in config")
-    set_model_parser.add_argument("model_name", help="Model name (e.g. GLM-4.6)")
+    set_model_parser.add_argument("model_name", help="Model name (e.g. GLM-4.7)")
 
     # Get model name
     config_subparsers.add_parser("get-model", help="Show current default model name from config")
