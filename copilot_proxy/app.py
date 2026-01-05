@@ -215,6 +215,18 @@ def get_model_catalog():
 MODEL_CATALOG = get_model_catalog()
 
 
+def _is_vision_model(model_name: str) -> bool:
+    """Detect if a model supports vision based on its name.
+    
+    Vision models contain 'V' in their name (e.g., GLM-4.6V, GLM-4.5V).
+    """
+    if not model_name:
+        return False
+    # Check if the model name contains 'V' after a version number
+    # Examples: GLM-4.6V, GLM-4.5V, GLM-4.6V-Flash, GLM-4.6V-FlashX
+    return "V" in model_name.upper()
+
+
 def _get_api_key() -> str:
     # First try to get API key from config file
     config_api_key = get_config_api_key()
@@ -312,10 +324,22 @@ def create_app() -> FastAPI:
             model_name = get_config_model_name() or DEFAULT_MODEL
 
         context_length = get_context_length()
+        
+        # Detect if the model supports vision
+        supports_vision = _is_vision_model(model_name)
+        
+        # Build capabilities array (legacy Ollama format)
+        capabilities = ["tools"]
+        if supports_vision:
+            capabilities.append("vision")
+        
+        # Calculate token limits
+        max_output_tokens = 4096
+        max_prompt_tokens = context_length - max_output_tokens
 
         return {
             "template": "{{ .System }}\n{{ .Prompt }}",
-            "capabilities": ["tools"],
+            "capabilities": capabilities,
             "details": {
                 "family": "glm",
                 "families": ["glm"],
@@ -327,6 +351,14 @@ def create_app() -> FastAPI:
                 "general.basename": model_name,
                 "general.architecture": "glm",
                 "glm.context_length": context_length,
+                # Add capability information in Ollama-compatible format
+                "glm.type": "chat",
+                "glm.supports.streaming": True,
+                "glm.supports.vision": supports_vision,
+                "glm.supports.tool_calls": True,
+                "glm.limits.max_prompt_tokens": max_prompt_tokens,
+                "glm.limits.max_output_tokens": max_output_tokens,
+                "glm.limits.max_context_window_tokens": context_length,
             },
         }
 
