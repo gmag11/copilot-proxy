@@ -59,6 +59,23 @@ def save_config(config: Dict[str, Any]) -> None:
         json.dump(config, f, indent=2)
 
 
+def _ensure_model_config(config: Dict[str, Any], model_name: str) -> Dict[str, Any]:
+    """Ensure model-specific configuration structure exists.
+
+    Args:
+        config: The main configuration dictionary.
+        model_name: The model name to ensure configuration for.
+
+    Returns:
+        The model-specific configuration dictionary.
+    """
+    if "models" not in config:
+        config["models"] = {}
+    if model_name not in config["models"]:
+        config["models"][model_name] = {}
+    return config["models"][model_name]
+
+
 def get_api_key() -> Optional[str]:
     """Get API key from config file.
 
@@ -174,11 +191,8 @@ def set_context_length(context_length: int, model_name: Optional[str] = None) ->
     
     if model_name:
         # Set model-specific context length
-        if "models" not in config:
-            config["models"] = {}
-        if model_name not in config["models"]:
-            config["models"][model_name] = {}
-        config["models"][model_name]["context_length"] = context_length
+        model_config = _ensure_model_config(config, model_name)
+        model_config["context_length"] = context_length
     else:
         # Set global context length
         config["context_length"] = context_length
@@ -266,11 +280,8 @@ def set_max_output_tokens(max_output_tokens: int, model_name: Optional[str] = No
     
     if model_name:
         # Set model-specific max output tokens
-        if "models" not in config:
-            config["models"] = {}
-        if model_name not in config["models"]:
-            config["models"][model_name] = {}
-        config["models"][model_name]["max_output_tokens"] = max_output_tokens
+        model_config = _ensure_model_config(config, model_name)
+        model_config["max_output_tokens"] = max_output_tokens
     else:
         # Set global max output tokens
         config["max_output_tokens"] = max_output_tokens
