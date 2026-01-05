@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -22,6 +23,7 @@ DEFAULT_MODEL = "GLM-4.7"
 API_KEY_ENV_VARS = ("ZAI_API_KEY", "ZAI_CODING_API_KEY", "GLM_API_KEY")
 BASE_URL_ENV_VAR = "ZAI_API_BASE_URL"
 CHAT_COMPLETION_PATH = "/chat/completions"
+DEFAULT_MAX_OUTPUT_TOKENS = 4096
 
 def get_model_catalog():
     """Generate the model catalog dynamically based on config."""
@@ -225,8 +227,6 @@ def _is_vision_model(model_name: str) -> bool:
         return False
     # Check if model name contains a version number followed by 'V'
     # This matches patterns like: GLM-4.6V, GLM-4.5V, GLM-4.6V-Flash, etc.
-    # Split by hyphens and check if any segment ends with a digit followed by 'V'
-    import re
     # Pattern: digit followed by V (either at end or before hyphen)
     # Examples: "4.6V", "4.5V"
     return bool(re.search(r'\d+\.\d+V', model_name))
@@ -339,7 +339,7 @@ def create_app() -> FastAPI:
             capabilities.append("vision")
         
         # Calculate token limits
-        max_output_tokens = 4096
+        max_output_tokens = DEFAULT_MAX_OUTPUT_TOKENS
         max_prompt_tokens = max(0, context_length - max_output_tokens)
 
         return {
