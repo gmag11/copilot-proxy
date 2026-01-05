@@ -16,6 +16,7 @@ from .config import (
     get_api_key as get_config_api_key,
     get_base_url as get_config_base_url,
     get_context_length,
+    get_max_output_tokens,
     get_model_name as get_config_model_name,
     get_temperature,
 )
@@ -338,7 +339,8 @@ def create_app() -> FastAPI:
         if not model_name:
             model_name = get_config_model_name() or DEFAULT_MODEL
 
-        context_length = get_context_length()
+        # Get model-specific or global context length
+        context_length = get_context_length(model_name)
         
         # Detect if the model supports vision
         supports_vision = _is_vision_model(model_name)
@@ -348,8 +350,8 @@ def create_app() -> FastAPI:
         if supports_vision:
             capabilities.append("vision")
         
-        # Calculate token limits
-        max_output_tokens = DEFAULT_MAX_OUTPUT_TOKENS
+        # Calculate token limits - try model-specific first, then global, then default
+        max_output_tokens = get_max_output_tokens(model_name) or DEFAULT_MAX_OUTPUT_TOKENS
         max_prompt_tokens = max(0, context_length - max_output_tokens)
 
         return {

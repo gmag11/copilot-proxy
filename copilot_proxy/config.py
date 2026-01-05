@@ -139,24 +139,50 @@ def ensure_complete_config() -> None:
         save_config(config)
 
 
-def get_context_length() -> int:
+def get_context_length(model_name: Optional[str] = None) -> int:
     """Get context length from config file.
 
+    Args:
+        model_name: Optional model name to get model-specific context length.
+                   If None, returns global default.
+
     Returns:
-        Context length if found in config, 128000 otherwise.
+        Context length for the specified model, or global default (128000).
     """
     config = load_config()
+    
+    # If model_name is provided, check for model-specific setting
+    if model_name:
+        model_configs = config.get("models", {})
+        model_config = model_configs.get(model_name, {})
+        if "context_length" in model_config:
+            return model_config["context_length"]
+    
+    # Fall back to global context_length
     return config.get("context_length", 128000)
 
 
-def set_context_length(context_length: int) -> None:
+def set_context_length(context_length: int, model_name: Optional[str] = None) -> None:
     """Save context length to config file.
 
     Args:
         context_length: The context length to save.
+        model_name: Optional model name to set model-specific context length.
+                   If None, sets global default.
     """
     config = load_config()
-    config["context_length"] = context_length
+    
+    if model_name:
+        # Set model-specific context length
+        if "models" not in config:
+            config["models"] = {}
+        if model_name not in config["models"]:
+            config["models"][model_name] = {}
+        config["models"][model_name]["context_length"] = context_length
+    else:
+        # Set global context length
+        config["context_length"] = context_length
+    
     save_config(config)
 
 
@@ -202,4 +228,51 @@ def set_temperature(temperature: float) -> None:
     """
     config = load_config()
     config["temperature"] = temperature
+    save_config(config)
+
+
+def get_max_output_tokens(model_name: Optional[str] = None) -> Optional[int]:
+    """Get max output tokens from config file.
+
+    Args:
+        model_name: Optional model name to get model-specific max output tokens.
+                   If None, returns global default.
+
+    Returns:
+        Max output tokens for the specified model, or None if not set.
+    """
+    config = load_config()
+    
+    # If model_name is provided, check for model-specific setting
+    if model_name:
+        model_configs = config.get("models", {})
+        model_config = model_configs.get(model_name, {})
+        if "max_output_tokens" in model_config:
+            return model_config["max_output_tokens"]
+    
+    # Fall back to global max_output_tokens (may be None)
+    return config.get("max_output_tokens")
+
+
+def set_max_output_tokens(max_output_tokens: int, model_name: Optional[str] = None) -> None:
+    """Save max output tokens to config file.
+
+    Args:
+        max_output_tokens: The max output tokens to save.
+        model_name: Optional model name to set model-specific max output tokens.
+                   If None, sets global default.
+    """
+    config = load_config()
+    
+    if model_name:
+        # Set model-specific max output tokens
+        if "models" not in config:
+            config["models"] = {}
+        if model_name not in config["models"]:
+            config["models"][model_name] = {}
+        config["models"][model_name]["max_output_tokens"] = max_output_tokens
+    else:
+        # Set global max output tokens
+        config["max_output_tokens"] = max_output_tokens
+    
     save_config(config)
