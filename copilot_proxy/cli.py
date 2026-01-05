@@ -12,7 +12,8 @@ from .config import (
     is_first_run, ensure_complete_config,
     set_context_length, get_context_length,
     set_model_name, get_model_name,
-    set_temperature, get_temperature
+    set_temperature, get_temperature,
+    set_max_output_tokens, get_max_output_tokens
 )
 
 DEFAULT_HOST = "127.0.0.1"
@@ -120,9 +121,20 @@ def build_parser() -> argparse.ArgumentParser:
     # Set context length
     set_ctx_parser = config_subparsers.add_parser("set-context-length", help="Set context length in config")
     set_ctx_parser.add_argument("context_length", type=int, help="Context length (e.g. 64000, 128000)")
+    set_ctx_parser.add_argument("--model", help="Model name to set context length for (optional, sets global if not specified)")
 
     # Get context length
-    config_subparsers.add_parser("get-context-length", help="Show current context length from config")
+    get_ctx_parser = config_subparsers.add_parser("get-context-length", help="Show current context length from config")
+    get_ctx_parser.add_argument("--model", help="Model name to get context length for (optional, shows global if not specified)")
+
+    # Set max output tokens
+    set_max_output_parser = config_subparsers.add_parser("set-max-output-tokens", help="Set max output tokens in config")
+    set_max_output_parser.add_argument("max_output_tokens", type=int, help="Max output tokens (e.g. 4096, 8192)")
+    set_max_output_parser.add_argument("--model", help="Model name to set max output tokens for (optional, sets global if not specified)")
+
+    # Get max output tokens
+    get_max_output_parser = config_subparsers.add_parser("get-max-output-tokens", help="Show current max output tokens from config")
+    get_max_output_parser.add_argument("--model", help="Model name to get max output tokens for (optional, shows global if not specified)")
 
     # Set model name
     set_model_parser = config_subparsers.add_parser("set-model", help="Set default model name in config")
@@ -178,10 +190,39 @@ def main(argv: Optional[list[str]] = None) -> None:
             else:
                 print("No base URL found in config file.")
         elif args.config_action == "set-context-length":
-            set_context_length(args.context_length)
-            print("Context length saved to config file.")
+            model = getattr(args, 'model', None)
+            set_context_length(args.context_length, model_name=model)
+            if model:
+                print(f"Context length for model '{model}' saved to config file.")
+            else:
+                print("Global context length saved to config file.")
         elif args.config_action == "get-context-length":
-            print(f"Current context length: {get_context_length()}")
+            model = getattr(args, 'model', None)
+            context_length = get_context_length(model_name=model)
+            if model:
+                print(f"Context length for model '{model}': {context_length}")
+            else:
+                print(f"Global context length: {context_length}")
+        elif args.config_action == "set-max-output-tokens":
+            model = getattr(args, 'model', None)
+            set_max_output_tokens(args.max_output_tokens, model_name=model)
+            if model:
+                print(f"Max output tokens for model '{model}' saved to config file.")
+            else:
+                print("Global max output tokens saved to config file.")
+        elif args.config_action == "get-max-output-tokens":
+            model = getattr(args, 'model', None)
+            max_output = get_max_output_tokens(model_name=model)
+            if max_output is not None:
+                if model:
+                    print(f"Max output tokens for model '{model}': {max_output}")
+                else:
+                    print(f"Global max output tokens: {max_output}")
+            else:
+                if model:
+                    print(f"No max output tokens set for model '{model}' (using default).")
+                else:
+                    print("No global max output tokens set (using default).")
         elif args.config_action == "set-model":
             set_model_name(args.model_name)
             print("Model name saved to config file.")
