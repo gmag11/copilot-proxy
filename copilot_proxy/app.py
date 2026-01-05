@@ -220,15 +220,13 @@ MODEL_CATALOG = get_model_catalog()
 def _is_vision_model(model_name: str) -> bool:
     """Detect if a model supports vision based on its name.
     
-    Vision models have 'V' as a separate component in their name
+    Vision models have version numbers directly followed by 'V'
     (e.g., GLM-4.6V, GLM-4.5V, GLM-4.6V-Flash).
     """
     if not model_name:
         return False
-    # Check if model name contains a version number followed by 'V'
-    # This matches patterns like: GLM-4.6V, GLM-4.5V, GLM-4.6V-Flash, etc.
-    # Pattern: digit followed by V (either at end or before hyphen)
-    # Examples: "4.6V", "4.5V"
+    # Pattern: version number (digit.digit+) followed by 'V'
+    # Matches: "4.6V", "4.5V", etc. in model names
     return bool(re.search(r'\d+\.\d+V', model_name))
 
 
