@@ -218,13 +218,18 @@ MODEL_CATALOG = get_model_catalog()
 def _is_vision_model(model_name: str) -> bool:
     """Detect if a model supports vision based on its name.
     
-    Vision models contain 'V' in their name (e.g., GLM-4.6V, GLM-4.5V).
+    Vision models have 'V' as a separate component in their name
+    (e.g., GLM-4.6V, GLM-4.5V, GLM-4.6V-Flash).
     """
     if not model_name:
         return False
-    # Check if the model name contains 'V' after a version number
-    # Examples: GLM-4.6V, GLM-4.5V, GLM-4.6V-Flash, GLM-4.6V-FlashX
-    return "V" in model_name.upper()
+    # Check if model name contains a version number followed by 'V'
+    # This matches patterns like: GLM-4.6V, GLM-4.5V, GLM-4.6V-Flash, etc.
+    # Split by hyphens and check if any segment ends with a digit followed by 'V'
+    import re
+    # Pattern: digit followed by V (either at end or before hyphen)
+    # Examples: "4.6V", "4.5V"
+    return bool(re.search(r'\d+\.\d+V', model_name))
 
 
 def _get_api_key() -> str:
@@ -335,7 +340,7 @@ def create_app() -> FastAPI:
         
         # Calculate token limits
         max_output_tokens = 4096
-        max_prompt_tokens = context_length - max_output_tokens
+        max_prompt_tokens = max(0, context_length - max_output_tokens)
 
         return {
             "template": "{{ .System }}\n{{ .Prompt }}",
