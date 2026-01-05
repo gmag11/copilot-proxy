@@ -122,7 +122,7 @@ def ensure_complete_config() -> None:
 
     # Ensure context_length exists
     if "context_length" not in config:
-        config["context_length"] = 64000
+        config["context_length"] = 128000
         updated = True
 
     # Ensure default host exists
@@ -143,10 +143,10 @@ def get_context_length() -> int:
     """Get context length from config file.
 
     Returns:
-        Context length if found in config, 64000 otherwise.
+        Context length if found in config, 128000 otherwise.
     """
     config = load_config()
-    return config.get("context_length", 64000)
+    return config.get("context_length", 128000)
 
 
 def set_context_length(context_length: int) -> None:
