@@ -1,6 +1,8 @@
 """FastAPI application exposing the Copilot proxy endpoints."""
 from __future__ import annotations
 
+import json
+import logging
 import os
 import re
 from contextlib import asynccontextmanager
@@ -18,12 +20,15 @@ from .config import (
     get_temperature,
 )
 
+logger = logging.getLogger(__name__)
+
 DEFAULT_BASE_URL = "https://api.z.ai/api/coding/paas/v4"
 DEFAULT_MODEL = "GLM-4.7"
 API_KEY_ENV_VARS = ("ZAI_API_KEY", "ZAI_CODING_API_KEY", "GLM_API_KEY")
 BASE_URL_ENV_VAR = "ZAI_API_BASE_URL"
 CHAT_COMPLETION_PATH = "/chat/completions"
 DEFAULT_MAX_OUTPUT_TOKENS = 4096
+MAX_REQUEST_SIZE_BYTES = 100_000  # ~100KB limit for Z.AI API requests
 
 def get_model_catalog():
     """Generate the model catalog dynamically based on config."""
@@ -217,6 +222,13 @@ def get_model_catalog():
 MODEL_CATALOG = get_model_catalog()
 
 
+def _truncate_content(content: str, max_length: int = 500) -> str:
+    """Truncate content if it's too long for logging."""
+    if len(content) <= max_length:
+        return content
+    return content[:max_length] + f"... (truncated, total length: {len(content)})"
+
+
 def _is_vision_model(model_name: str) -> bool:
     """Detect if a model supports vision based on its name.
     
@@ -370,6 +382,52 @@ def create_app() -> FastAPI:
         """Forward chat completion calls to the Z.AI backend."""
 
         body = await request.json()
+        
+        # Check request size before processing
+        body_str = json.dumps(body, ensure_ascii=False)
+        body_size = len(body_str.encode('utf-8'))
+        
+        if body_size > MAX_REQUEST_SIZE_BYTES:
+            logger.warning(f"Request too large: {body_size} bytes (limit: {MAX_REQUEST_SIZE_BYTES})")
+            logger.warning("This typically happens when VS Code sends very long system prompts")
+            logger.warning("Consider truncating system messages or using a different model configuration")
+            
+            # Return error before sending to Z.AI
+            return {
+                "id": "error",
+                "object": "chat.completion",
+                "created": 0,
+                "model": body.get("model", DEFAULT_MODEL),
+                "choices": [{
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": f"Request too large ({body_size} bytes). Z.AI API has a limit of approximately {MAX_REQUEST_SIZE_BYTES} bytes. Please reduce the system prompt size or message length."
+                    },
+                    "finish_reason": "length"
+                }],
+                "usage": {
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                    "total_tokens": 0
+                }
+            }
+        
+        # Log request structure
+        logger.info(f"Chat completion request: model={body.get('model')}, stream={body.get('stream')}, messages_count={len(body.get('messages', []))}, size={body_size} bytes")
+        
+        # Log all top-level keys to identify unsupported parameters
+        logger.info(f"Request keys: {list(body.keys())}")
+        
+        # Log message structure (without full content)
+        if "messages" in body:
+            for i, msg in enumerate(body["messages"]):
+                content_preview = str(msg.get("content", ""))[:100] if msg.get("content") else "None"
+                logger.debug(f"Message {i}: role={msg.get('role')}, content_length={len(str(msg.get('content', '')))}, content_preview={content_preview}...")
+        
+        logger.debug(f"Full request body (first 2000 chars): {body_str[:2000]}")
+        if len(body_str) > 2000:
+            logger.debug(f"Full request body (last 1000 chars): ...{body_str[-1000:]}")
 
         if not body.get("model"):
             body["model"] = get_config_model_name() or DEFAULT_MODEL
@@ -403,6 +461,15 @@ def create_app() -> FastAPI:
                         yield chunk
 
                 except httpx.HTTPStatusError as exc:
+                    logger.error(f"HTTP {exc.response.status_code} error from Z.AI API")
+                    logger.error(f"Request URL: {exc.request.url}")
+                    logger.error(f"Request body: {_truncate_content(json.dumps(body, ensure_ascii=False), 2000)}")
+                    try:
+                        error_body = exc.response.text
+                        logger.error(f"Response body: {_truncate_content(error_body, 1000)}")
+                    except Exception:
+                        logger.error("Could not read response body")
+                    
                     if exc.response.status_code == 401:
                         raise RuntimeError("Unauthorized. Check your Z.AI API key.") from exc
                     raise
@@ -415,9 +482,23 @@ def create_app() -> FastAPI:
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {api_key}",
             }
-            response = await client.post(chat_completion_url, headers=headers, json=body)
-            response.raise_for_status()
-            return response.json()
+            try:
+                response = await client.post(chat_completion_url, headers=headers, json=body)
+                response.raise_for_status()
+                return response.json()
+            except httpx.HTTPStatusError as exc:
+                logger.error(f"HTTP {exc.response.status_code} error from Z.AI API (non-streaming)")
+                logger.error(f"Request URL: {exc.request.url}")
+                logger.error(f"Request body: {_truncate_content(json.dumps(body, ensure_ascii=False), 2000)}")
+                try:
+                    error_body = exc.response.text
+                    logger.error(f"Response body: {_truncate_content(error_body, 1000)}")
+                except Exception:
+                    logger.error("Could not read response body")
+                
+                if exc.response.status_code == 401:
+                    raise RuntimeError("Unauthorized. Check your Z.AI API key.") from exc
+                raise
 
     return app
 
