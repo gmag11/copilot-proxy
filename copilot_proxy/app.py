@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -22,6 +23,7 @@ DEFAULT_MODEL = "GLM-4.7"
 API_KEY_ENV_VARS = ("ZAI_API_KEY", "ZAI_CODING_API_KEY", "GLM_API_KEY")
 BASE_URL_ENV_VAR = "ZAI_API_BASE_URL"
 CHAT_COMPLETION_PATH = "/chat/completions"
+DEFAULT_MAX_OUTPUT_TOKENS = 4096
 
 def get_model_catalog():
     """Generate the model catalog dynamically based on config."""
@@ -215,6 +217,19 @@ def get_model_catalog():
 MODEL_CATALOG = get_model_catalog()
 
 
+def _is_vision_model(model_name: str) -> bool:
+    """Detect if a model supports vision based on its name.
+    
+    Vision models have version numbers directly followed by 'V'
+    (e.g., GLM-4.6V, GLM-4.5V, GLM-4.6V-Flash).
+    """
+    if not model_name:
+        return False
+    # Pattern: version number (digit.digit+) followed by 'V'
+    # Matches: "4.6V", "4.5V", etc. in model names
+    return bool(re.search(r'\d+\.\d+V', model_name))
+
+
 def _get_api_key() -> str:
     # First try to get API key from config file
     config_api_key = get_config_api_key()
@@ -312,10 +327,22 @@ def create_app() -> FastAPI:
             model_name = get_config_model_name() or DEFAULT_MODEL
 
         context_length = get_context_length()
+        
+        # Detect if the model supports vision
+        supports_vision = _is_vision_model(model_name)
+        
+        # Build capabilities array (legacy Ollama format)
+        capabilities = ["tools"]
+        if supports_vision:
+            capabilities.append("vision")
+        
+        # Calculate token limits
+        max_output_tokens = DEFAULT_MAX_OUTPUT_TOKENS
+        max_prompt_tokens = max(0, context_length - max_output_tokens)
 
         return {
             "template": "{{ .System }}\n{{ .Prompt }}",
-            "capabilities": ["tools"],
+            "capabilities": capabilities,
             "details": {
                 "family": "glm",
                 "families": ["glm"],
@@ -327,6 +354,14 @@ def create_app() -> FastAPI:
                 "general.basename": model_name,
                 "general.architecture": "glm",
                 "glm.context_length": context_length,
+                # Add capability information in Ollama-compatible format
+                "glm.type": "chat",
+                "glm.supports.streaming": True,
+                "glm.supports.vision": supports_vision,
+                "glm.supports.tool_calls": True,
+                "glm.limits.max_prompt_tokens": max_prompt_tokens,
+                "glm.limits.max_output_tokens": max_output_tokens,
+                "glm.limits.max_context_window_tokens": context_length,
             },
         }
 
